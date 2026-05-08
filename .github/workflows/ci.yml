@@ -1,0 +1,191 @@
+# ============================================================
+# CI Pipeline — Powered By Claude
+# ============================================================
+# Status Badges (add these to your README.md):
+#
+# ![CI Pipeline](https://github.com/pmendoza28/Powered-By-Claude/actions/workflows/ci.yml/badge.svg?branch=main)
+# ![Backend CI](https://github.com/pmendoza28/Powered-By-Claude/actions/workflows/ci.yml/badge.svg?job=backend-ci)
+# ![Frontend CI](https://github.com/pmendoza28/Powered-By-Claude/actions/workflows/ci.yml/badge.svg?job=frontend-ci)
+#
+# Job Execution Order:
+#   [backend-ci] ──┐
+#                  ├──▶ [e2e-tests]
+#   [frontend-ci] ─┘
+# ============================================================
+
+name: CI Pipeline
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+# ─────────────────────────────────────────────
+# JOB 1: Backend CI (NestJS)
+# ─────────────────────────────────────────────
+jobs:
+  backend-ci:
+    name: "Backend CI (NestJS)"
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./backend
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Cache node_modules
+        uses: actions/cache@v4
+        with:
+          path: backend/node_modules
+          key: ${{ runner.os }}-backend-${{ hashFiles('backend/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-backend-
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Run tests
+        run: npm run test
+        env:
+          JWT_SECRET: ${{ secrets.JWT_SECRET }}
+          NODE_ENV: test
+
+      - name: Build
+        run: npm run build
+
+# ─────────────────────────────────────────────
+# JOB 2: Frontend CI (Angular)
+# ─────────────────────────────────────────────
+  frontend-ci:
+    name: "Frontend CI (Angular)"
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./frontend
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Cache node_modules
+        uses: actions/cache@v4
+        with:
+          path: frontend/node_modules
+          key: ${{ runner.os }}-frontend-${{ hashFiles('frontend/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-frontend-
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Run tests
+        run: npm run test -- --watch=false --browsers=ChromeHeadless
+
+      - name: Build
+        run: npm run build
+
+# ─────────────────────────────────────────────
+# JOB 3: E2E Tests (Cypress)
+# Runs after both Job 1 and Job 2 pass
+# ─────────────────────────────────────────────
+  e2e-tests:
+    name: "QA / E2E Tests (Cypress)"
+    runs-on: ubuntu-latest
+    needs: [backend-ci, frontend-ci]
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Cache backend node_modules
+        uses: actions/cache@v4
+        with:
+          path: backend/node_modules
+          key: ${{ runner.os }}-backend-${{ hashFiles('backend/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-backend-
+
+      - name: Cache frontend node_modules
+        uses: actions/cache@v4
+        with:
+          path: frontend/node_modules
+          key: ${{ runner.os }}-frontend-${{ hashFiles('frontend/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-frontend-
+
+      - name: Install backend dependencies
+        working-directory: ./backend
+        run: npm install
+
+      - name: Install frontend dependencies
+        working-directory: ./frontend
+        run: npm install
+
+      - name: Start NestJS backend on port 3000
+        working-directory: ./backend
+        run: nohup npm run start:dev > /tmp/backend.log 2>&1 &
+        env:
+          JWT_SECRET: ${{ secrets.JWT_SECRET }}
+          PORT: 3000
+          NODE_ENV: development
+
+      - name: Start Angular frontend on port 4200
+        working-directory: ./frontend
+        run: nohup npx ng serve --port 4200 --host 0.0.0.0 > /tmp/frontend.log 2>&1 &
+
+      - name: Wait for backend and frontend to be ready
+        run: |
+          npx wait-on \
+            http://localhost:3000 \
+            http://localhost:4200 \
+            --timeout 120000 \
+            --interval 2000 \
+            --verbose
+
+      - name: Run Cypress E2E tests
+        run: npx cypress run --headless
+        env:
+          CYPRESS_BASE_URL: http://localhost:4200
+          JWT_SECRET: ${{ secrets.JWT_SECRET }}
+
+      - name: Upload Cypress screenshots on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: cypress-screenshots
+          path: cypress/screenshots
+          if-no-files-found: ignore
+
+      - name: Upload Cypress videos on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: cypress-videos
+          path: cypress/videos
+          if-no-files-found: ignore
