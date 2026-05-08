@@ -22,7 +22,14 @@ module.exports = function (config) {
       reporters: [{ type: 'html' }, { type: 'text-summary' }],
     },
     reporters: ['progress', 'kjhtml'],
-    browsers: ['ChromeHeadless'],
+    // ChromeHeadlessNoSandbox is required for CI environments (GitHub Actions, Docker)
+    customLaunchers: {
+      ChromeHeadlessNoSandbox: {
+        base: 'ChromeHeadless',
+        flags: ['--no-sandbox', '--disable-setuid-sandbox'],
+      },
+    },
+    browsers: ['ChromeHeadlessNoSandbox'],
     restartOnFileChange: true,
   });
 };
