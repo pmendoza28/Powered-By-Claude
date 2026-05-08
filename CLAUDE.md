@@ -161,3 +161,9 @@ ng serve
 - Always pull before push
 - Create feature branches for new features
 - Branch naming: feature/, fix/, chore/, hotfix/
+
+## Required NPM Scripts
+Both frontend and backend must always have:
+- "lint": ESLint check
+- "test": Run unit tests
+- "build": Production build
