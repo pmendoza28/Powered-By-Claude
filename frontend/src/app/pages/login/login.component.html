@@ -1,0 +1,52 @@
+<div class="wrapper">
+  <div class="card">
+    <div class="card-header">
+      <div class="icon-wrap">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+          <path fill-rule="evenodd" d="M12 1.5a5.25 5.25 0 0 0-5.25 5.25v3a3 3 0 0 0-3 3v6.75a3 3 0 0 0 3 3h10.5a3 3 0 0 0 3-3v-6.75a3 3 0 0 0-3-3v-3c0-2.9-2.35-5.25-5.25-5.25Zm3.75 8.25v-3a3.75 3.75 0 1 0-7.5 0v3h7.5Z" clip-rule="evenodd" />
+        </svg>
+      </div>
+      <h1>Welcome back</h1>
+      <p>Sign in to your account</p>
+    </div>
+
+    <form [formGroup]="form" (ngSubmit)="submit()">
+      <div class="field">
+        <label for="username">Username</label>
+        <input
+          id="username"
+          type="text"
+          formControlName="username"
+          placeholder="Enter your username"
+          autocomplete="username"
+        />
+      </div>
+
+      <div class="field">
+        <label for="password">Password</label>
+        <input
+          id="password"
+          type="password"
+          formControlName="password"
+          placeholder="Enter your password"
+          autocomplete="current-password"
+        />
+      </div>
+
+      @if (error) {
+        <div class="alert-error">{{ error }}</div>
+      }
+
+      <button type="submit" [disabled]="loading || form.invalid" [class.loading]="loading">
+        @if (loading) {
+          <span class="spinner"></span>
+          Signing in...
+        } @else {
+          Sign In
+        }
+      </button>
+    </form>
+
+    <p class="hint">Demo credentials: <code>admin</code> / <code>password</code></p>
+  </div>
+</div>

@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(Start-Sleep -Seconds 6)",
+      "Bash(Get-Content \"D:\\\\Projects\\\\claude\\\\backend\\\\backend.log\" -ErrorAction SilentlyContinue)"
+    ]
+  }
+}
