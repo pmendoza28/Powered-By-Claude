@@ -30,9 +30,6 @@ jobs:
   backend-ci:
     name: "Backend CI (NestJS)"
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: ./backend
 
     steps:
       - name: Checkout code
@@ -52,18 +49,22 @@ jobs:
             ${{ runner.os }}-backend-
 
       - name: Install dependencies
+        working-directory: ./backend
         run: npm install
 
       - name: Lint
+        working-directory: ./backend
         run: npm run lint
 
       - name: Run tests
-        run: npm run test -- --passWithNoTests
+        working-directory: ./backend
+        run: npm run test
         env:
           JWT_SECRET: ${{ secrets.JWT_SECRET }}
           NODE_ENV: test
 
       - name: Build
+        working-directory: ./backend
         run: npm run build
 
 # ─────────────────────────────────────────────
@@ -72,9 +73,6 @@ jobs:
   frontend-ci:
     name: "Frontend CI (Angular)"
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: ./frontend
 
     steps:
       - name: Checkout code
@@ -94,15 +92,19 @@ jobs:
             ${{ runner.os }}-frontend-
 
       - name: Install dependencies
+        working-directory: ./frontend
         run: npm install
 
       - name: Lint
+        working-directory: ./frontend
         run: npm run lint
 
       - name: Run tests
-        run: npm run test:ci
+        working-directory: ./frontend
+        run: npm run test
 
       - name: Build
+        working-directory: ./frontend
         run: npm run build
 
 # ─────────────────────────────────────────────
