@@ -5,7 +5,8 @@
       "Bash(Get-Content \"D:\\\\Projects\\\\claude\\\\backend\\\\backend.log\" -ErrorAction SilentlyContinue)",
       "Bash(git rm *)",
       "Bash(git add *)",
-      "Bash(git push *)"
+      "Bash(git push *)",
+      "Bash(git commit *)"
     ]
   }
 }
